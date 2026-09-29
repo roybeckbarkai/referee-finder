@@ -4,6 +4,11 @@ Nine prompts, in order. Paste each one, read what comes back, then move on. You 
 touch a terminal and you never write code. Total time is roughly an hour, most of it
 waiting during step 5.
 
+**The prompts below are written out in full, as a worked example.** They are filled in
+for a fictional researcher, Dana Levi, a chemist at the University of Copenhagen with
+ORCID `0000-0002-1825-0097`. Swap in your own ORCID, your own institution and your own
+conflicts wherever hers appear. Everything else you can paste exactly as it stands.
+
 At the end you will have:
 
 - `referees_shortlist.md` and `.csv`: your verified candidate referees, split into two
@@ -54,25 +59,37 @@ missing paper is a missing community. Count the lines against your CV yourself.
 
 ## Step 2. Tell it who you are and who you cannot propose
 
+The example below is Dana's. Your conflicts will be different, and the reasons matter:
+they get copied into the excluded file so you can defend each one later.
+
 > Copy `config.example.toml` to `config.toml` and set:
 >
-> - `orcid` to `0000-...`
-> - `name` to my name as it appears on papers
-> - `home_institutions` to my institution, including any former name, the attached
->   hospital or medical school, and any institute formally part of it. Ask me if you are
->   unsure which variants to include.
+> - `orcid` to `0000-0002-1825-0097`
+> - `name` to `Dana Levi`
+> - `home_institutions` to `["university of copenhagen", "københavns universitet",
+>   "rigshospitalet"]`
 >
-> Then create `data/manual_exclusions.txt` from the following list, one per line as
+> I have included the Danish name of the university and the university hospital,
+> because affiliations are written both ways and the hospital is formally part of us.
+> Tell me if you think I have missed a variant, or if any of those strings looks broad
+> enough to match a different institution by accident.
+>
+> Then create `data/manual_exclusions.txt` with these, one per line, as
 > `Surname, Forename   # reason`. These are conflicts the citation graph cannot see:
 >
-> [list your grant co-PIs, partners on pending proposals, your PhD and postdoc
-> supervisors, anyone you would recuse. Give a reason for each: it gets copied into the
-> excluded file so you can defend it later.]
+> ```
+> Weiss, Daniel      # co-PI, Horizon grant 101098765
+> Okonkwo, Amara     # partner on a pending Synergy proposal
+> Tanaka, Hiroshi    # my PhD supervisor
+> Brandt, Lise       # examiner on my student's defence, 2025
+> ```
 >
 > Show me both files when you are done.
 
 `home_institutions` matters more than it looks. It is a plain substring match, so
-`york university` also matches `New York University`. Keep the entries distinctive.
+`york university` would also match `New York University`. Keep the entries distinctive,
+and include former names, the attached hospital or medical school, and any institute
+formally part of you.
 
 ---
 
@@ -165,6 +182,14 @@ domains outright. If that happens, the assistant should tell you it worked from 
 snapshots rather than live pages. That is a weaker basis, and worth writing into the
 report rather than hiding.
 
+A useful follow-up once the table is in front of you, since the assistant will often
+have been more certain than the evidence warrants:
+
+> Go back over the ones you marked include. For any where the PI evidence is a single
+> ambiguous sentence, or where the person might be a co-leader rather than running their
+> own group, tell me now rather than leaving it in the report. I would rather lose a
+> name than defend a weak one.
+
 ---
 
 ## Step 6. Build the report
@@ -206,11 +231,12 @@ report rather than hiding.
 ## Step 7. Reference gaps in something you are writing
 
 The part most people end up using every week. Attach the manuscript or grant you are
-drafting and its `.bib`.
+drafting and its `.bib`. Dana's are `levi_crystallisation_2026.tex` and `refs.bib`; use
+your own filenames.
 
 > Run:
 >
-> `python3 referee_finder.py suggest my_paper.tex --bib refs.bib --shortlist referees_shortlist.csv --include-coauthors`
+> `python3 referee_finder.py suggest levi_crystallisation_2026.tex --bib refs.bib --shortlist referees_shortlist.csv --include-coauthors`
 >
 > Use `--shortlist` rather than a rank cutoff: a `--top` window silently skips verified
 > people who rank below it, which in one test missed 16 of 24 real gaps.
