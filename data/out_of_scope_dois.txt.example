@@ -1,0 +1,6 @@
+# Optional. DOIs of YOUR OWN papers that sit outside the field you want referees for
+# — a methods note in another discipline, a paper from a previous career, a comment.
+# They still count for breadth but never as "group papers", so their citers do not
+# get pushed to the top of the list.
+
+10.1016/j.example.2011.01.001   # instrumentation paper, different community

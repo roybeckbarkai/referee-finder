@@ -1,0 +1,52 @@
+# Copy this file to config.toml and edit it. config.toml is git-ignored.
+# Python 3.11+ reads TOML natively. On 3.10 or older, write the same keys as
+# config.json instead (JSON syntax, same structure).
+
+[author]
+# Your ORCID. Find or create one at https://orcid.org — it takes two minutes and
+# it is what lets the tool find your OpenAlex record.
+orcid = "0000-0000-0000-0000"
+
+# Your name as it appears on papers. Used only as a fallback when OpenAlex has not
+# attached your author id to one of your own papers (this happens for roughly 4% of
+# authorship records). Leave blank if you prefer not to set it.
+name = "Jane Q. Researcher"
+
+# One DOI per line. This is the anchor for everything — see README, "Why a DOI list".
+doi_file = "data/author_dois.txt"
+
+
+[exclusions]
+# Anything in your own institution's name, lowercase, as it appears in affiliations.
+# Include former names, the hospital/medical-school name, and any institute that is
+# formally part of you. Matching is a plain substring test, so keep entries distinctive:
+# "york university" also matches "New York University".
+home_institutions = ["example university"]
+
+# THE CO-AUTHOR RULE IS OPTIONAL — see README, "Turning the co-author rule off".
+#   true  = drop everyone you have published with inside the window (referee lists)
+#   false = keep them (mapping your field, or deciding what a paper should cite)
+# The `suggest` command has its own --include-coauthors flag, because citing a close
+# collaborator in a paper is normal and most editors do not apply a co-authorship rule
+# to reference lists.
+exclude_recent_coauthors = true
+coauthor_window_years = 5
+
+# Conflicts the citation graph cannot see: grant partners, thesis examiners, people
+# you share a pending proposal with, anyone you would recuse. Format, one per line:
+#   Surname, Forename   # why
+manual_exclusions_file = "data/manual_exclusions.txt"
+
+
+[ranking]
+# Papers where you are LAST author are treated as your group's papers and rank first.
+#
+# Setting this to true ALSO counts your first-author papers. Do that only if you
+# published first-author work as an independent PI. If your first-author papers are
+# from your PhD or postdoc, turning this on seeds your former supervisor's lab into
+# the candidate list — in testing it put the old postdoc host at rank 72 and pulled
+# eight of that lab into the top 30.
+group_papers_include_first_author = false
+
+# How many candidates to put in the shortlist you will verify by hand.
+top = 30

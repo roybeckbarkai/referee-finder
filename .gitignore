@@ -1,0 +1,15 @@
+# Your identity and your data never belong in the repo.
+config.toml
+config.json
+data/*
+!data/.gitkeep
+!data/*.example
+input/*
+!input/.gitkeep
+citation_gaps*.csv
+referees_shortlist*
+referees_excluded*
+__pycache__/
+*.pyc
+.DS_Store
+.venv/

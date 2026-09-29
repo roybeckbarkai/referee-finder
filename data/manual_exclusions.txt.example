@@ -1,0 +1,8 @@
+# Conflicts of interest the citation graph cannot see. One per line:
+#   Surname, Forename   # reason
+# The reason is copied into the excluded list so you can defend each one later.
+# Forename may be omitted; if given, only the first initial is compared.
+
+Smith, John        # co-PI, NSF grant 1234567
+Garcia, Maria      # partner on a pending proposal
+Tanaka, Hiroshi    # my PhD supervisor

@@ -1,0 +1,18 @@
+# Your publications, one DOI per line. Bare DOIs — no https://doi.org/ prefix.
+# Comments and blank lines are ignored. Delete these examples and use your own.
+#
+# Easiest way to build this: put your CV or publication list in ../input/ and ask an
+# LLM to extract every DOI, one per line. Then check the count against your CV.
+#
+# Watch for tracking parameters. A DOI copied from a publisher page often arrives as
+# 10.1234/abcd?utm_source=... or ?sharing_token=... — those 404 and the paper silently
+# disappears from the harvest. Strip everything from the "?" onwards.
+#
+# Anything below the #PREPRINTS marker is ignored by harvest, so park preprints of
+# already-published work there rather than deleting them.
+
+10.1126/science.275.5301.810
+10.1103/physrevlett.93.268104
+
+#PREPRINTS
+10.1101/2025.01.01.000000
