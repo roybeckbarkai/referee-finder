@@ -46,8 +46,13 @@ and ask them to check it against their CV.** A missing paper is a missing commun
 ## `home_institutions` — get this right or exclusions look like bugs
 
 Lowercase substrings matched against affiliation strings. Include former names of the
-institution, the attached hospital or medical school, and any institute formally part of
-it. Keep entries distinctive: `york university` also matches `New York University`.
+same institution and its local-language name. Keep entries distinctive: `york
+university` also matches `New York University`.
+
+Do NOT add institutions where the user trained. People at a former PhD or postdoc
+institution are not conflicts merely because the user worked there once, and excluding a
+whole university deletes part of their field. The conflict from that period is a person:
+it belongs in `manual_exclusions.txt`, or the co-author window catches it.
 
 When a user says "this person was excluded as same-institution but they are not",
 look at `matched_home_institution` in `data/excluded.csv` — it names the affiliation

@@ -47,13 +47,22 @@ Then start a new session and **attach your CV** to your first message.
 > My CV is attached. Extract every DOI of my own papers into `data/author_dois.txt`, one
 > bare DOI per line, no `https://doi.org/` prefix. Strip any tracking parameters, so
 > everything from a `?` onwards. Put preprints of papers that are also published below a
-> `#PREPRINTS` line rather than deleting them.
+> `#PREPRINTS` line rather than deleting them. A preprint with no journal version yet
+> is a real paper and belongs ABOVE that line so it gets harvested; only duplicates of
+> published work go below it.
 >
 > Then show me the count and the full list so I can check it against my CV before
-> anything runs. Tell me about any entry in my CV you could not find a DOI for.
+> anything runs. Tell me about any entry in my CV you could not find a DOI for. Run
+> every later command from the directory holding `referee_finder.py`: it resolves
+> `data/` relative to its own location, not to the working directory.
 
-**Check this carefully.** The DOI list is the anchor for everything downstream. A
-missing paper is a missing community. Count the lines against your CV yourself.
+**Use your complete publication list, not a selected one.** The DOI list anchors
+everything downstream in both directions. A missing paper loses you candidates, and
+worse, it hides a conflict: the co-author exclusion is built only from the papers you
+supply, so someone you have published with can reach the top of the list with no
+co-author flag against them. On a nine-paper selected list in testing, the
+second-ranked candidate was a co-author and nothing flagged it. Count the lines
+against your CV yourself.
 
 ---
 
@@ -195,10 +204,28 @@ already on the list.
 >
 > Give me the results as a table, and list separately anyone you excluded and why.
 
-Some institutions block automated access, and some organisations block university
-domains outright. If that happens, the assistant should tell you it worked from search
-snapshots rather than live pages. That is a weaker basis, and worth writing into the
-report rather than hiding.
+**Some organisations block university domains outright, and the block cannot always be
+lifted by asking.** If yours does, this step cannot be done as written, and applying the
+"no readable page means exclude" rule literally empties your shortlist completely. That
+is what happened on a test run: every institutional domain returned a proxy 403 and the
+access request was refused at organisation level.
+
+So add this to the prompt above:
+
+> Try one institutional page first. If it fails, use `request_network_access` for that
+> domain and tell me what happened. If the request is refused above my level, do not
+> quietly exclude everyone. Instead record, for each candidate, whether the evidence is
+> a page you read, a bibliographic record you retrieved yourself (OpenAlex or Europe PMC
+> give you affiliation strings and corresponding addresses from their own recent
+> papers), a search snippet of a page you could not open, or nothing at all. Exclude
+> somebody only on positive evidence that they are not an independent PI, never merely
+> because a page would not load. Then tell me how many rest on a page read and how many
+> do not.
+
+Europe PMC and OpenAlex stayed reachable in that test, and between them they supplied a
+current affiliation and a corresponding email for the candidates checked. What they
+cannot give you is the sentence establishing that someone still leads a group, which is
+the field the whole decision turns on. Know which of your candidates that applies to.
 
 A useful follow-up once the table is in front of you, since the assistant will often
 have been more certain than the evidence warrants:
@@ -264,11 +291,17 @@ your own filenames.
 > screen reference lists for co-authorship, and citing close collaborators in a paper is
 > normal and usually correct.
 >
-> Then go through `citation_gaps.csv` with me. For each row, tell me whether the
-> suggested paper genuinely belongs in the section it proposes, on the merits. Say
-> plainly where it does not. Do not recommend a citation that is not warranted, and
-> flag the rows where `also_covers` means one added reference would close several gaps
-> at once.
+> First check the author list of every suggested paper. If I am an author on it, say so
+> and reframe it: that is a paper of mine I have failed to cite, not a gap attributable
+> to the candidate. In testing, the only gap reported for the second-ranked candidate
+> turned out to be a paper the user had written and led.
+>
+> Then go through the rest of `citation_gaps.csv` with me. For each row, tell me whether
+> the suggested paper genuinely belongs in the section it proposes, on the merits. Say
+> plainly where it does not: a match on three generic words is not an argument. Do not
+> recommend a citation that is not warranted. Where `also_covers` is populated, flag it,
+> since one added reference would close several gaps at once; it is often empty for
+> every row, which is normal.
 
 The matching underneath is word overlap between their paper title and your section
 text. It has no idea what your paper argues. It proposes; you and the assistant judge.
