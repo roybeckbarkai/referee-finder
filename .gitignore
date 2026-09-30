@@ -13,3 +13,10 @@ __pycache__/
 *.pyc
 .DS_Store
 .venv/
+
+# Test fixtures and run reports: these have carried real conflict lists, grant
+# numbers, ORCIDs and referee shortlists. They must never be committed.
+test_fixture/
+*_report.md
+baseline*.json
+repro/
