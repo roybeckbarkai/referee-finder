@@ -207,9 +207,24 @@ def harvest(args):
             works += list(_page("works", {"filter": f"author.id:{aid.rsplit('/', 1)[-1]}",
                                           "select": "id,doi,title,publication_year,"
                                                     "cited_by_count,authorships"}))
+    # Dedupe on WORK ID and then on DOI. OpenAlex sometimes holds two work records for
+    # one DOI (seen: 10.1038/s41598-020-73030-2 -> W3105602250 and W3008415495), which
+    # made 79 input DOIs resolve to 80 works and inflated every per-work total,
+    # including the group-paper count, by one. Keep the record with more citations.
     seen = set()
     works = [w for w in works if not (w["id"] in seen or seen.add(w["id"]))]
-    print(f"your works: {len(works)}  (total citations {sum(w['cited_by_count'] for w in works)})")
+    by_doi = {}
+    for w in sorted(works, key=lambda x: -x.get("cited_by_count", 0)):
+        d = (w.get("doi") or "").replace("https://doi.org/", "").lower()
+        if not d:
+            by_doi[w["id"]] = w
+        elif d not in by_doi:
+            by_doi[d] = w
+        else:
+            print(f"  note: DOI {d} has two OpenAlex records; keeping the more cited one")
+    works = list(by_doi.values())
+    print(f"your works: {len(works)}  (total citations "
+          f"{sum(w['cited_by_count'] for w in works)})")
     json.dump(works, open(os.path.join(DATA, "author_works.json"), "w"))
 
     start = _window_start(CFG)
@@ -433,9 +448,23 @@ def rank(args):
             "matched_home_institution": "; ".join(sorted(
                 {i for i in d["institutions"] for h in home if h in i.lower()})),
             "is_home_institution": any(h in i.lower() for i in d["institutions"] for h in home),
+            # You can appear in your OWN candidate list. OpenAlex sometimes issues a
+            # second author record for the same person and that record is not reachable
+            # from your ORCID, so self-exclusion misses it. Observed case: the preprint
+            # version of the author's own paper carried a second author record with the
+            # name spelt differently, the correct affiliation, and an UNRELATED
+            # namesake's ORCID attached. It sat at rank 47 of his own shortlist, removed
+            # only because the stray record happened to carry his institution. An ORCID
+            # on an authorship record is not evidence of identity. Flag rather than drop
+            # silently: a genuine namesake is possible.
+            "is_possible_self": _name_key(d["name"]) in me_names,
         })
 
     manual = read_manual_exclusions()
+    # Report manual-exclusion lines that matched nobody. A typo and a person who simply
+    # never cited you look identical otherwise, and the user cannot tell which it was.
+    name_keys = {_name_key(r["name"]) for r in rows}
+    unmatched = [k for k in manual if k not in name_keys]
     apply_coauthor = CFG["exclusions"]["exclude_recent_coauthors"] and not args.include_coauthors
     for r in rows:
         why = []
@@ -443,6 +472,9 @@ def rank(args):
             why.append(f"co-author since {start}")
         if r["is_home_institution"]:
             why.append("same institution")
+        if r["is_possible_self"]:
+            why.append("same name as you — check whether this is you under a second "
+                       "OpenAlex record, or a namesake")
         m = manual.get(_name_key(r["name"]))
         r["is_manual_exclusion"] = bool(m)
         if m:
@@ -468,8 +500,8 @@ def rank(args):
             "n_papers_cited", "n_citing_papers", "n_recent_citing_papers",
             "last_citing_year", "senior_author_share", "institutions", "n_institutions",
             "top_topics", "prior_coauthor_years", "exclusion_reason", "is_recent_coauthor",
-            "is_home_institution", "matched_home_institution", "is_manual_exclusion",
-            "orcid", "author_id"]
+            "is_home_institution", "matched_home_institution", "is_possible_self",
+            "is_manual_exclusion", "orcid", "author_id"]
 
     def write(path, data):
         with open(path, "w", newline="") as f:
@@ -492,6 +524,12 @@ def rank(args):
     print(f"  recent co-authors: {n_co} "
           f"({'excluded' if apply_coauthor else 'KEPT — co-author filter off'})")
     print(f"  same institution : {n_home} (always excluded)")
+    print(f"  the per-rule counts above OVERLAP; {excl} distinct people were excluded. "
+          f"For the breakdown by reason read data/excluded.csv.")
+    if unmatched:
+        print(f"  {len(unmatched)} manual-exclusion entries matched nobody in the pool "
+              f"(check the spelling, or they simply never cited you): "
+              + "; ".join(" ".join(x for x in k if x) for k in unmatched))
     print(f"wrote data/candidates_ranked.csv, data/shortlist_to_verify.csv (top {top}), "
           f"data/excluded.csv")
 
@@ -604,6 +642,12 @@ def suggest(args):
                     "authors": [x["author"].get("display_name", "")
                                 for x in (c.get("authorships") or [])]})
 
+    own_works = json.load(open(os.path.join(DATA, "author_works.json")))
+    own_dois = {(w.get("doi") or "").replace("https://doi.org/", "").lower()
+                for w in own_works} | set(read_doi_list())
+    own_dois.discard("")
+    own_gaps = {}
+
     text, secs = _read_manuscript(args.manuscript)
     bibs = args.bib or []
     blob = text + "".join("\n" + open(b, encoding="utf8", errors="ignore").read()
@@ -622,6 +666,16 @@ def suggest(args):
             continue
         best, best_score, best_sec = None, 0.0, None
         for p in mine:
+            # Never attribute one of the AUTHOR'S OWN papers to a candidate. A paper
+            # the author co-wrote is in the citing corpus like any other, so a
+            # co-author of theirs can be handed their own shared paper as the reason to
+            # cite them. On a real grant this was 3 of 6 reported gaps, all pointing at
+            # 2 papers the author had supplied as his own. It is still worth knowing
+            # about as a self-citation, so it is collected separately below.
+            if p["doi"] and p["doi"] in own_dois:
+                own_gaps.setdefault(p["doi"], {"title": p["title"], "for": []})
+                own_gaps[p["doi"]]["for"].append(r["name"])
+                continue
             # OpenAlex merges common names, so a high rank can rest on somebody else's
             # papers. Keep only papers whose own author list contains this candidate.
             if p["authors"] and not any(_same_person(r["name"], *_split_name(a))
@@ -680,6 +734,12 @@ def suggest(args):
     print(f"{len(rows)} candidates checked against {os.path.basename(args.manuscript)}")
     print(f"  not cited: {len(out)}   with a defensible placement: {placed}")
     print(f"wrote {dest}")
+    if own_gaps:
+        print(f"\nSeparately, {len(own_gaps)} of YOUR OWN papers matched a section and "
+              f"are not cited in this manuscript.\nThese are self-citations, not gaps "
+              f"attributable to anyone:")
+        for d, g in own_gaps.items():
+            print(f"  {d}  {' '.join((g['title'] or '').split())[:76]}")
     for o in out[:12]:
         if o["doi"]:
             print(f"  · {o['name']} -> {o['section']}  [{o['shared_terms']}]")

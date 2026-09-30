@@ -146,9 +146,14 @@ work instead of whoever happened to be on the biggest consortium paper.
 > Before we verify anyone, run three checks on `data/candidates_ranked.csv` and report
 > the results:
 >
-> 1. Any candidate whose `n_institutions` is far above 3. That pattern means OpenAlex
->    name-merging has fused several real people into one row, which both invents a
->    nonsense entry and hides everyone inside it.
+> 1. The name-merge bug: OpenAlex sometimes fuses several real people into one row,
+>    inventing a nonsense entry and hiding everyone inside it. Do not test this on
+>    `n_institutions` alone — on real data dozens of legitimate rows reach six or more,
+>    because every institution on a multi-centre paper is attached to each of its
+>    authors, and the CSV shows only the first three anyway. Go to
+>    `data/citing_works.json` and count, per candidate name, the distinct OpenAlex
+>    author ids and the id-less authorships under it. One id is one person, however
+>    many affiliations. Several ids, or a pile of id-less records, is a merge.
 > 2. Every row flagged `is_home_institution` should have a non-empty
 >    `matched_home_institution`. Tell me if any are empty, and show me the distinct
 >    matched strings so I can see whether my institution name is matching too broadly.

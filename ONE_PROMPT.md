@@ -126,12 +126,17 @@ Work through this sequence.
 
 10. Before we verify anybody, run these checks and report them.
 
-    First, tell me the maximum n_institutions across all rows and list anyone at six or
-    more. For each of those, say whether the affiliations look like one person holding
-    several posts or several different people fused into one row by name matching, which
-    both invents a nonsense entry and hides everybody inside it. Genuinely
-    multi-affiliated researchers reach four or five, so a clean run finds nobody here:
-    give me the maximum either way, so I can see the check actually ran.
+    First, look for the name-merge bug: OpenAlex sometimes fuses several real people
+    into one row, which invents a nonsense entry and hides everybody inside it. Do NOT
+    test this on n_institutions alone. On real data that column reaches six or more on
+    dozens of legitimate rows, because OpenAlex attaches every institution on a
+    multi-centre paper to each of its authors, and the CSV shows only the first three
+    alphabetically so you cannot tell from it anyway. The reliable test is to go back to
+    data/citing_works.json and count, per candidate name, how many distinct OpenAlex
+    author ids and how many id-less authorships sit under it. One id is one person,
+    however many affiliations they have. Several ids, or a pile of id-less records,
+    is a merge. Report what you find, and report the maximum n_institutions too so that
+    I can see the check ran.
 
     Second, every row flagged is_home_institution must name the affiliation that
     triggered it. Show me the distinct matched strings so I can see whether my
