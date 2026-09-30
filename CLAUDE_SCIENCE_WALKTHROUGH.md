@@ -66,13 +66,16 @@ they get copied into the excluded file so you can defend each one later.
 >
 > - `orcid` to `0000-0002-1825-0097`
 > - `name` to `Dana Levi`
-> - `home_institutions` to `["university of copenhagen", "københavns universitet",
->   "rigshospitalet"]`
+> - `home_institutions` to `["university of copenhagen", "københavns universitet"]`
 >
-> I have included the Danish name of the university and the university hospital,
-> because affiliations are written both ways and the hospital is formally part of us.
-> Tell me if you think I have missed a variant, or if any of those strings looks broad
-> enough to match a different institution by accident.
+> I have included the Danish name as well, because affiliations are written both ways.
+> I have deliberately NOT included ETH Zürich, where I did my postdoc and where several
+> of my papers come from: people there are not my conflicts just because I worked there
+> once, and cutting a whole university would delete part of my own field from the
+> results. My former supervisor is in the conflicts list below instead.
+>
+> Tell me if I have missed a variant of my current university, or if either of those
+> strings looks broad enough to catch a different one by accident.
 >
 > Then create `data/manual_exclusions.txt` with these, one per line, as
 > `Surname, Forename   # reason`. These are conflicts the citation graph cannot see:
@@ -80,16 +83,31 @@ they get copied into the excluded file so you can defend each one later.
 > ```
 > Weiss, Daniel      # co-PI, Horizon grant 101098765
 > Okonkwo, Amara     # partner on a pending Synergy proposal
-> Tanaka, Hiroshi    # my PhD supervisor
+> Tanaka, Hiroshi    # my postdoc supervisor, ETH Zürich
 > Brandt, Lise       # examiner on my student's defence, 2025
 > ```
 >
-> Show me both files when you are done.
+> Also: my first-author papers were all written in Hiroshi's lab, not my own, so leave
+> `group_papers_include_first_author` off. Show me all three files when you are done.
 
-`home_institutions` matters more than it looks. It is a plain substring match, so
-`york university` would also match `New York University`. Keep the entries distinctive,
-and include former names, the attached hospital or medical school, and any institute
-formally part of you.
+Two things about this step.
+
+`home_institutions` is a plain substring match, so `york university` would also match
+`New York University`. Keep the entries distinctive, and include former names of your
+current university and its local-language name. Do not add the universities where you
+trained. The conflict there is a person, not a postcode, and it belongs in
+`manual_exclusions.txt` or gets caught by the co-author window.
+
+The first-author setting is off by default and should usually stay off. The ranking
+treats papers where you are **last** author as your group's own work and puts the people
+citing those at the top. Counting first-author papers written in someone else's lab
+seeds your former supervisor's group as candidate referees: in one test it put the old
+postdoc host at rank 72 and pulled eight members of that lab into the top 30. Turn it on
+only if you published first-author work as an independent PI.
+
+If some of your papers sit in a subfield you have left behind and do not want referees
+from, put those DOIs in `data/out_of_scope_dois.txt`. They still count towards how
+broadly someone cites you, but their citers stop being pushed to the top.
 
 ---
 
